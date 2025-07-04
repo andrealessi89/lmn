@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - RedTrack Auth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .status-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .status-valid {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-invalid {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .status-warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .help-text {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 RedTrack Authentication Manager</h1>
+
+        <div id="alert" class="alert"></div>
+        
+        <div class="status-card">
+            <h3>Status da Autenticação</h3>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Carregando...</p>
+            </div>
+            <div id="status-content" style="display: none;">
+                <div class="status-item">
+                    <span>Status:</span>
+                    <span id="auth-status"></span>
+                </div>
+                <div class="status-item">
+                    <span>Válido:</span>
+                    <span id="auth-valid"></span>
+                </div>
+                <div class="status-item">
+                    <span>Expira em:</span>
+                    <span id="auth-expires"></span>
+                </div>
+                <div class="status-item">
+                    <span>Mensagem:</span>
+                    <span id="auth-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group" style="margin-top: 20px; margin-bottom: 30px;">
+            <button type="button" class="btn-secondary" onclick="checkStatus()">🔄 Atualizar Status</button>
+        </div>
+
+        <details style="margin-bottom: 30px;">
+            <summary style="cursor: pointer; font-weight: 600; color: #495057;">⚙️ Configurações Avançadas</summary>
+            <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+
+                <form id="auth-form">
+                    <h4>Atualização Manual de Credenciais</h4>
+                    <div class="form-group">
+                        <label for="token">Bearer Token (JWT)</label>
+                        <textarea id="token" name="token" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required></textarea>
+                        <div class="help-text">
+                            Cole o token JWT capturado do DevTools (Authorization header sem "Bearer ")
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cookies">Cookies</label>
+                        <textarea id="cookies" name="cookies" placeholder="rtkclickid-store=...; hubspotutk=...; ..." required></textarea>
+                        <div class="help-text">
+                            Cole todos os cookies capturados do DevTools (Request Headers > Cookie)
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expiresInHours">Validade (horas)</label>
+                        <input type="number" id="expiresInHours" name="expiresInHours" value="24" min="1" max="168">
+                        <div class="help-text">
+                            Tempo de validade das credenciais (padrão: 24 horas)
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">💾 Salvar Manualmente</button>
+                        <button type="button" class="btn-danger" onclick="clearAuth()">🗑️ Limpar Tudo</button>
+                    </div>
+                </form>
+            </div>
+        </details>
+    </div>
+
+    <script>
+        const API_URL = '/api/admin/redtrack/auth';
+
+        // Check status on page load
+        window.onload = () => {
+            checkStatus();
+        };
+
+        async function checkStatus() {
+            showLoading(true);
+            hideAlert();
+
+            try {
+                const response = await fetch(`${API_URL}/status`);
+                const data = await response.json();
+                updateStatusDisplay(data);
+            } catch (error) {
+                showAlert('Erro ao verificar status: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function updateStatusDisplay(data) {
+            const statusEl = document.getElementById('auth-status');
+            const validEl = document.getElementById('auth-valid');
+            const expiresEl = document.getElementById('auth-expires');
+            const messageEl = document.getElementById('auth-message');
+
+            // Status
+            if (data.valid) {
+                statusEl.textContent = 'Ativo';
+                statusEl.className = 'status-valid';
+            } else {
+                statusEl.textContent = 'Inativo';
+                statusEl.className = 'status-invalid';
+            }
+
+            // Valid
+            validEl.textContent = data.valid ? 'Sim' : 'Não';
+            validEl.className = data.valid ? 'status-valid' : 'status-invalid';
+
+            // Expires
+            if (data.hoursRemaining) {
+                const hours = Math.floor(data.hoursRemaining);
+                const minutes = Math.floor((data.hoursRemaining - hours) * 60);
+                expiresEl.textContent = `${hours}h ${minutes}min`;
+                
+                if (data.expiringSoon) {
+                    expiresEl.className = 'status-warning';
+                } else {
+                    expiresEl.className = 'status-valid';
+                }
+            } else {
+                expiresEl.textContent = 'Expirado';
+                expiresEl.className = 'status-invalid';
+            }
+
+            // Message
+            messageEl.textContent = data.message || '-';
+            
+            document.getElementById('status-content').style.display = 'block';
+        }
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlert();
+
+            const formData = {
+                token: document.getElementById('token').value.trim(),
+                cookies: document.getElementById('cookies').value.trim(),
+                expiresInHours: parseInt(document.getElementById('expiresInHours').value)
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Credenciais salvas com sucesso!', 'success');
+                    document.getElementById('auth-form').reset();
+                    document.getElementById('expiresInHours').value = '24';
+                    setTimeout(checkStatus, 1000);
+                } else {
+                    showAlert('Erro: ' + (data.error || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                showAlert('Erro ao salvar: ' + error.message, 'error');
+            }
+        });
+
+        async function clearAuth() {
+            if (!confirm('Tem certeza que deseja limpar todas as credenciais?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                showAlert(data.message || 'Credenciais removidas', 'warning');
+                setTimeout(checkStatus, 1000);
+            } catch (error) {
+                showAlert('Erro ao limpar: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+        }
+
+        function hideAlert() {
+            document.getElementById('alert').style.display = 'none';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('status-content').style.display = show ? 'none' : 'block';
+        }
+
+        async function performAutoLogin() {
+            if (!confirm('Executar login automático no RedTrack?')) {
+                return;
+            }
+
+            showAlert('🤖 Iniciando login automático... Isso pode levar alguns segundos.', 'warning');
+
+            try {
+                const response = await fetch(`${API_URL}/auto-login`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('✅ ' + data.message, 'success');
+                    setTimeout(checkStatus, 1000);
+                } else {
+                    showAlert('❌ Erro: ' + (data.error || 'Falha no login automático'), 'error');
+                }
+            } catch (error) {
+                showAlert('❌ Erro ao executar login: ' + error.message, 'error');
+            }
+        }
+
+        async function autoRenew() {
+            showAlert('♻️ Verificando necessidade de renovação...', 'warning');
+
+            try {
+                const response = await fetch(`${API_URL}/auto-renew`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert(data.message, data.renewed ? 'success' : 'warning');
+                    if (data.renewed) {
+                        setTimeout(checkStatus, 1000);
+                    }
+                } else {
+                    showAlert('❌ Erro na renovação: ' + (data.error || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                showAlert('❌ Erro ao renovar: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

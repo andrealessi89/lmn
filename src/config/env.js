@@ -6,6 +6,8 @@ export const config = {
   port: process.env.PORT || 5000,
   databaseUrl: process.env.DATABASE_URL,
   redtrackApiKey: process.env.REDTRACK_API_KEY,
+  redtrackEmail: process.env.REDTRACK_EMAIL,
+  redtrackPassword: process.env.REDTRACK_PASSWORD,
   redtrack: {
     apiKey: process.env.REDTRACK_API_KEY,
     baseUrl: 'https://api.redtrack.io/api/v2'

@@ -258,6 +258,52 @@ GET /api/redtrack/domains/bodydawn.com/info
 - Retorna ID necessário para outras operações
 - Logs detalhados durante a busca
 
+### 6️⃣ Criar Lander (Landing Page)
+
+```http
+POST /api/redtrack/landers
+Content-Type: application/json
+
+{
+    "domain": "exemplo.com"
+}
+```
+
+**Descrição:** Cria uma landing page no RedTrack para o domínio especificado. 
+
+⚠️ **Importante:** Requer autenticação válida configurada via painel admin.
+
+**Resposta de Sucesso (201):**
+```json
+{
+    "message": "Lander created successfully for exemplo.com",
+    "landerId": "abc123",
+    "domainId": "12345",
+    "data": {
+        "id": "abc123",
+        "title": "(Automação) Lander | exemplo.com",
+        "type": "l",
+        "domain_id": "12345",
+        "typeUrl": "https://rt.exemplo.com/click",
+        "url": "https://exemplo.com/wtlander?utm_source={sub8}&utm_medium=cpc&utm_campaign={sub6}",
+        "lp_views": "<script src=\"https://rt.exemplo.com/track.js\"></script>",
+        "created_at": "2025-07-03T22:00:00Z"
+    }
+}
+```
+
+**Resposta de Erro (400):**
+```json
+{
+    "error": "No valid RedTrack authentication found. Please update credentials via admin panel."
+}
+```
+
+**Fluxo da criação:**
+1. Busca automaticamente o ID do domínio no RedTrack
+2. Cria a lander com configurações padrão
+3. Configura tracking script e parâmetros UTM
+
 ### 📋 Exemplos de Uso
 
 **JavaScript/Node.js:**
@@ -270,6 +316,11 @@ const response = await axios.post('http://localhost:5000/api/redtrack/domains', 
 // Buscar informações completas do domínio
 const info = await axios.get('http://localhost:5000/api/redtrack/domains/bodydawn.com/info');
 console.log('ID do domínio:', info.data.id);
+
+// Criar lander (requer autenticação configurada)
+const lander = await axios.post('http://localhost:5000/api/redtrack/landers', {
+    domain: 'bodydawn.com'
+});
 
 // Verificar status
 const status = await axios.get('http://localhost:5000/api/redtrack/domains/bodydawn.com/status');
@@ -287,6 +338,11 @@ curl -X POST http://localhost:5000/api/redtrack/domains \
 
 # Buscar informações completas (com ID)
 curl http://localhost:5000/api/redtrack/domains/bodydawn.com/info
+
+# Criar lander (requer autenticação)
+curl -X POST http://localhost:5000/api/redtrack/landers \
+  -H "Content-Type: application/json" \
+  -d '{"domain":"bodydawn.com"}'
 
 # Verificar status
 curl http://localhost:5000/api/redtrack/domains/bodydawn.com/status
@@ -420,6 +476,45 @@ GET /api/cloudflare/dns/bodydawn.com
 └── 📄 README.md            # Documentação
 ```
 
+## 🔐 Gerenciamento de Autenticação RedTrack
+
+### Interface Admin
+
+Acesse a interface administrativa para gerenciar credenciais do RedTrack:
+
+```
+http://localhost:5000/admin.html
+```
+
+### Como obter as credenciais:
+
+1. **Faça login** no painel RedTrack: https://app.redtrack.io
+2. **Abra o DevTools** (F12) e vá para a aba **Network**
+3. **Recarregue a página** e procure por requisições para `/api/`
+4. **Copie o Bearer Token**: 
+   - Procure no header `Authorization: Bearer eyJhbG...`
+   - Copie apenas o token (sem "Bearer ")
+5. **Copie os Cookies**:
+   - No header `Cookie:`, copie todo o conteúdo
+
+### Endpoints Admin:
+
+```http
+# Verificar status da autenticação
+GET /api/admin/redtrack/auth/status
+
+# Atualizar credenciais
+POST /api/admin/redtrack/auth
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "cookies": "rtkclickid-store=...",
+  "expiresInHours": 24
+}
+
+# Limpar todas as credenciais
+DELETE /api/admin/redtrack/auth
+```
+
 ## 🧪 Scripts de Teste
 
 ```bash
@@ -428,6 +523,9 @@ node test-cloudflare-simple.js
 
 # Testar integração RedTrack
 node test-redtrack.js
+
+# Testar busca de informações do domínio
+node test-redtrack-info.js
 ```
 
 ## 🔧 Tecnologias Utilizadas
